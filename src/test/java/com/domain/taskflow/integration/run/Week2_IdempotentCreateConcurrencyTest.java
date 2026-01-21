@@ -1,4 +1,4 @@
-package com.domain.taskflow.integration;
+package com.domain.taskflow.integration.run;
 
 import com.domain.taskflow.api.dto.JobCreateRequest;
 import com.domain.taskflow.service.JobService;
@@ -13,11 +13,11 @@ import java.util.concurrent.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-public class IdempotentCreateConcurrencyTest extends IntegrationTestBase {
+public class Week2_IdempotentCreateConcurrencyTest extends IntegrationTestBase {
     private final JobService jobService;
 
     @Autowired
-    IdempotentCreateConcurrencyTest(JobService jobService) {
+    Week2_IdempotentCreateConcurrencyTest(JobService jobService) {
         this.jobService = jobService;
     }
 

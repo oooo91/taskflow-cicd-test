@@ -1,64 +1,72 @@
-package com.domain.taskflow.integration;
+package com.domain.taskflow.integration.run;
 
 import com.domain.taskflow.api.dto.JobCreateRequest;
-import com.domain.taskflow.repo.JobAttemptRepository;
 import com.domain.taskflow.repo.JobRepository;
 import com.domain.taskflow.service.JobService;
 import com.domain.taskflow.support.IntegrationTestBase;
-import com.domain.taskflow.worker.JobRunner;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.transaction.support.TransactionTemplate;
 
+import java.time.OffsetDateTime;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest
-public class WorkerSingleExecutionTest extends IntegrationTestBase {
+public class Week2_CasClaimRunningTest extends IntegrationTestBase {
+
     private final JobService jobService;
-    private final JobRunner jobRunner;
-    private final JobAttemptRepository attemptRepository;
     private final JobRepository jobRepository;
+    private final TransactionTemplate tx;
 
     @Autowired
-    WorkerSingleExecutionTest(JobService jobService,
-                              JobRunner jobRunner,
-                              JobAttemptRepository attemptRepository,
-                              JobRepository jobRepository) {
+    public Week2_CasClaimRunningTest(JobService jobService, JobRepository jobRepository, TransactionTemplate tx) {
         this.jobService = jobService;
-        this.jobRunner = jobRunner;
-        this.attemptRepository = attemptRepository;
         this.jobRepository = jobRepository;
+        this.tx = tx;
     }
 
     /**
-     * Runner 실행 단일성 테스트 (같은 job을 여러 스레드가 동시에 runOne() 호출 -> attempt 1개, 최종 상태 1번만 성공/실패로 확정)
+     * claimRuning 동시성 테스트 (여러 스레드가 동시에 요청 -> 스레드 하나만 성공
      *
      * @throws Exception
+     * @Modifiying은 트랜잭션이 필요해서 TransactionTemplate 로 감쌈
      */
     @Test
-    void runOne_calledConcurrently_shouldCreateOnlyOneAttempt() throws Exception {
+    void claimRunning_concurrently_onlyOneShouldWin() throws Exception {
+        // job 하나 생성
         JobCreateRequest req = new JobCreateRequest();
-        req.jobKey = "worker-single-1";
+        req.jobKey = "cas-claim-1";
         req.type = "BATCH_SIM";
-        req.payload = "{\"sleepMs\":100,\"shouldFail\":false}";
-        UUID jobId = jobService.create(req).getId();
+        req.payload = "{\"sleepMs\":50,\"shouldFail\":false}";
+        var job = jobService.create(req);
+        UUID jobId = job.getId();
 
         int threads = 20;
         ExecutorService pool = Executors.newFixedThreadPool(threads);
         CountDownLatch ready = new CountDownLatch(threads);
         CountDownLatch start = new CountDownLatch(1);
 
+        AtomicInteger success = new AtomicInteger(0);
+
         for (int i = 0; i < threads; i++) {
+            final String workerId = "worker-" + i;
             pool.submit(() -> {
                 ready.countDown();
                 start.await();
-                jobRunner.runOne(jobId);
+
+                Integer updated = tx.execute(status ->
+                        jobRepository.claimRunning(jobId, workerId, OffsetDateTime.now())
+                );
+
+                if (updated != null && updated == 1) success.incrementAndGet();
                 return null;
             });
         }
@@ -66,10 +74,8 @@ public class WorkerSingleExecutionTest extends IntegrationTestBase {
         ready.await();
         start.countDown();
         pool.shutdown();
-        pool.awaitTermination(10, TimeUnit.SECONDS);
+        pool.awaitTermination(5, TimeUnit.SECONDS);
 
-        assertThat(attemptRepository.countByJobId(jobId)).isEqualTo(1);
-        var job = jobRepository.findById(jobId).orElseThrow();
-        assertThat(job.getStatus().name()).isIn("SUCCESS", "FAILED");
+        assertThat(success.get()).isEqualTo(1);
     }
 }

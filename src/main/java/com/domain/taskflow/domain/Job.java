@@ -46,7 +46,11 @@ public class Job {
     @Column(name = "worker_id")
     private String workerId;
 
+    @Column(name = "next_run_at")
     private OffsetDateTime nextRunAt;
+
+    @Column(name = "running_started_at")
+    private OffsetDateTime runningStartedAt;
 
     @Column(nullable = false)
     private int maxAttempts = 3;
@@ -101,6 +105,10 @@ public class Job {
         return cancelRequested;
     }
 
+    public OffsetDateTime getRunningStartedAt() {
+        return runningStartedAt;
+    }
+
     public OffsetDateTime getCreatedAt() {
         return createdAt;
     }
@@ -153,6 +161,7 @@ public class Job {
     public void markRetryWait(OffsetDateTime nextRunAt, String errorCode, String errorMessage) {
         this.status = JobStatus.RETRY_WAIT;
         this.nextRunAt = nextRunAt;
+        this.runningStartedAt = null;
         this.lastErrorCode = errorCode;
         this.lastErrorMessage = errorMessage;
         this.attemptCount += 1;
@@ -162,6 +171,7 @@ public class Job {
     public void markFailedFinal(String errorCode, String errorMessage) {
         this.status = JobStatus.FAILED;
         this.nextRunAt = null;
+        this.runningStartedAt = null;
         this.lastErrorCode = errorCode;
         this.lastErrorMessage = errorMessage;
         this.attemptCount += 1;
@@ -171,6 +181,7 @@ public class Job {
     public void markCanceledFinal() {
         this.status = JobStatus.CANCELED;
         this.nextRunAt = null;
+        this.runningStartedAt = null;
         this.attemptCount += 1;
         touch();
     }
@@ -178,9 +189,17 @@ public class Job {
     public void markSuccessFinal() {
         this.status = JobStatus.SUCCESS;
         this.nextRunAt = null;
+        this.runningStartedAt = null;
         this.attemptCount += 1;
         touch();
     }
 
+    public void markRunningStarted(OffsetDateTime now) {
+        this.runningStartedAt = now;
+    }
+
+    public void clearRunningStarted() {
+        this.runningStartedAt = null;
+    }
 
 }

@@ -1,4 +1,4 @@
-package com.domain.taskflow.integration.run;
+package com.domain.taskflow.run;
 
 import com.domain.taskflow.api.dto.JobCreateRequest;
 import com.domain.taskflow.service.JobService;

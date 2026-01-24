@@ -1,13 +1,13 @@
-package com.domain.taskflow.integration.retry;
+package com.domain.taskflow.retry;
 
 import com.domain.taskflow.api.dto.JobCreateRequest;
 import com.domain.taskflow.domain.JobStatus;
 import com.domain.taskflow.repo.JobAttemptRepository;
 import com.domain.taskflow.repo.JobRepository;
-import com.domain.taskflow.retry.RetryScheduler;
 import com.domain.taskflow.service.JobService;
 import com.domain.taskflow.support.IntegrationTestBase;
 import com.domain.taskflow.worker.JobRunner;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,12 +42,8 @@ public class Week4_MaxAttemptsTest extends IntegrationTestBase {
     @Autowired
     JdbcTemplate jdbcTemplate;
 
-    /**
-     * maxAttempts 초과 시 FAILED 확정 테스트
-     *
-     * @throws Exception
-     */
     @Test
+    @DisplayName("maxAttempts 초과 시 FAILED 된다.")
     void retryable_but_exceeds_maxAttempts_shouldFailFinal() throws Exception {
         JobCreateRequest req = new JobCreateRequest();
         req.jobKey = "wk4-max-attempts-1";

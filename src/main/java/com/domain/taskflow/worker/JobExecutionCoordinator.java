@@ -12,6 +12,7 @@ public class JobExecutionCoordinator {
 
     private final RedisLockService lockService;
     private final JobRunner jobRunner;
+    private final WorkerRunner workerRunner;
 
     private final String workerId = "worker-1"; // 클라우드 올릴 떈 host/pod 로 변경
 
@@ -21,7 +22,7 @@ public class JobExecutionCoordinator {
         if (!locked) return;
 
         try {
-            jobRunner.runOne(jobId);
+            workerRunner.runOne(jobId);
         } finally {
             lockService.unlock(lockKey, workerId);
         }

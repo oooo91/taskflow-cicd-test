@@ -26,12 +26,13 @@ public interface JobRepository extends JpaRepository<Job, UUID> {
      */
     @Modifying
     @Query("""
-            update Job j
-                set j.status = com.domain.taskflow.domain.JobStatus.RUNNING, 
-                    j.workerId = :workerId, 
-                    j.updatedAt = :now
-            where j.id = :jobId
-                and j.status = com.domain.taskflow.domain.JobStatus.PENDING 
+              update Job j
+                 set j.status = com.domain.taskflow.domain.JobStatus.RUNNING,
+                     j.workerId = :workerId,
+                     j.runningStartedAt = :now,
+                     j.updatedAt = :now
+               where j.id = :jobId
+                 and j.status = com.domain.taskflow.domain.JobStatus.PENDING
             """)
     int claimRunning(@Param("jobId") UUID jobId,
                      @Param("workerId") String workerId,
@@ -68,4 +69,17 @@ public interface JobRepository extends JpaRepository<Job, UUID> {
             """)
     int releaseRetryWaitToPending(@Param("now") OffsetDateTime now);
 
+    /**
+     * 오래된 RUNNING JOB 들 조회 -> 이후 실제로 죽었는지 Redis heartbeat 확인하여 판정
+     *
+     * @param cutoff
+     * @return
+     */
+    @Query("""
+                select j from Job j 
+                where j.status = com.domain.taskflow.domain.JobStatus.RUNNING 
+                and j.runningStartedAt is not null
+                and j.runningStartedAt <= :cutoff
+            """)
+    List<Job> findRunningOlderThan(@Param("cutoff") OffsetDateTime cutoff);
 }

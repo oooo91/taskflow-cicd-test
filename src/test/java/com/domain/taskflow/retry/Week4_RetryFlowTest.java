@@ -1,4 +1,4 @@
-package com.domain.taskflow.integration.retry;
+package com.domain.taskflow.retry;
 
 import com.domain.taskflow.api.dto.JobCreateRequest;
 import com.domain.taskflow.domain.Job;
@@ -6,10 +6,10 @@ import com.domain.taskflow.domain.JobAttempt;
 import com.domain.taskflow.domain.JobStatus;
 import com.domain.taskflow.repo.JobAttemptRepository;
 import com.domain.taskflow.repo.JobRepository;
-import com.domain.taskflow.retry.RetryScheduler;
 import com.domain.taskflow.service.JobService;
 import com.domain.taskflow.support.IntegrationTestBase;
 import com.domain.taskflow.worker.JobRunner;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,12 +41,8 @@ public class Week4_RetryFlowTest extends IntegrationTestBase {
     @Autowired
     JobAttemptRepository attemptRepository;
 
-    /**
-     * 재시도 성공 테스트
-     *
-     * @throws Exception
-     */
     @Test
+    @DisplayName("재시도가 성공한다.")
     void fail_then_retry_then_success() throws Exception {
         JobCreateRequest req = new JobCreateRequest();
         req.jobKey = "wk4-retry-success-1";

@@ -1,4 +1,4 @@
-package com.domain.taskflow.integration.retry;
+package com.domain.taskflow.retry;
 
 import com.domain.taskflow.api.dto.JobCreateRequest;
 import com.domain.taskflow.domain.JobStatus;
@@ -7,6 +7,7 @@ import com.domain.taskflow.repo.JobRepository;
 import com.domain.taskflow.service.JobService;
 import com.domain.taskflow.support.IntegrationTestBase;
 import com.domain.taskflow.worker.JobRunner;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,10 +35,8 @@ public class Week4_NonRetryableTest extends IntegrationTestBase {
     @Autowired
     JobAttemptRepository attemptRepository;
 
-    /**
-     * UNKNOWN TYPE 일 시 즉시 FAILED
-     */
     @Test
+    @DisplayName("UNKNOWN TYPE일 시 즉시 FAILED 된다.")
     void unknownType_shouldFailImmediately() {
         JobCreateRequest req = new JobCreateRequest();
         req.jobKey = "wk4-unknown-type-1";

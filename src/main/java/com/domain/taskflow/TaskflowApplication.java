@@ -1,13 +1,12 @@
 package com.domain.taskflow;
 
-import com.domain.taskflow.retry.RetryProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
-@EnableConfigurationProperties(RetryProperties.class)
+@ConfigurationPropertiesScan(basePackages = "com.domain.taskflow")
 @EnableScheduling
 public class TaskflowApplication {
 

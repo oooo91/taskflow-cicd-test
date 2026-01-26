@@ -3,6 +3,7 @@ package com.domain.taskflow.reaper;
 import com.domain.taskflow.domain.Job;
 import com.domain.taskflow.domain.JobEvent;
 import com.domain.taskflow.heartbeat.HeartbeatService;
+import com.domain.taskflow.metrics.JobMetrics;
 import com.domain.taskflow.repo.JobEventRepository;
 import com.domain.taskflow.repo.JobRepository;
 import com.domain.taskflow.retry.RetryPolicy;
@@ -23,6 +24,7 @@ public class StaleJobReaper {
     private final JobEventRepository jobEventRepository;
     private final HeartbeatService heartbeatService;
     private final RetryPolicy retryPolicy;
+    private final JobMetrics jobMetrics;
     private final ReaperProperties reaperProperties;
 
     @Scheduled(fixedDelayString = "${taskflow.reaper.interval-ms:1000}")
@@ -55,9 +57,11 @@ public class StaleJobReaper {
         boolean hasMoreAttempts = job.getAttemptCount() < job.getMaxAttempts();
 
         if (retryable && hasMoreAttempts) {
-            // 즉시 재시도 큐로 (바로 pending 하지 않고 정책상 retry_wait 후 -> scheduler 로 통일)
             OffsetDateTime nextRunAt = now;
-            job.markRetryWait(nextRunAt, code, message); // runningStartedAt 초기화 + attemptCount++
+            job.markRetryWait(nextRunAt, code, message);
+
+            // stale 회수 1건 카운트 (RETRY_WAIT로 회수)
+            jobMetrics.incStaleReaped();
 
             jobEventRepository.save(new JobEvent(
                     UUID.randomUUID(),
@@ -66,7 +70,10 @@ public class StaleJobReaper {
                     "{\"jobId\":\"" + job.getId() + "\",\"to\":\"RETRY_WAIT\",\"reason\":\"STALE\",\"errorCode\":\"" + code + "\"}"
             ));
         } else {
-            job.markFailedFinal(code, message); // runningStartedAt=null + attemptCount++
+            job.markFailedFinal(code, message);
+
+            // stale 회수 1건 카운트 (FAILED로 최종 처리)
+            jobMetrics.incStaleReaped();
 
             jobEventRepository.save(new JobEvent(
                     UUID.randomUUID(),

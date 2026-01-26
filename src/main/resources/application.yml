@@ -41,3 +41,15 @@ taskflow:
   reaper:
     interval-ms: 1000
     stale-running-ms: 15000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      app: taskflow

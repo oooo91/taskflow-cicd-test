@@ -3,6 +3,7 @@ package com.domain.taskflow.worker;
 import com.domain.taskflow.domain.Job;
 import com.domain.taskflow.domain.JobAttempt;
 import com.domain.taskflow.domain.JobEvent;
+import com.domain.taskflow.metrics.JobMetrics;
 import com.domain.taskflow.repo.JobAttemptRepository;
 import com.domain.taskflow.repo.JobEventRepository;
 import com.domain.taskflow.repo.JobRepository;
@@ -19,11 +20,11 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class WorkerTx {
 
-
     private final JobRepository jobRepository;
     private final JobEventRepository jobEventRepository;
     private final JobAttemptRepository jobAttemptRepository;
     private final RetryPolicy retryPolicy;
+    private final JobMetrics jobMetrics;
 
     /**
      * claim + RUNNING 이벤트 + attempt 생성까지 한 번에 확정 커밋
@@ -73,6 +74,8 @@ public class WorkerTx {
                 "STATUS_CHANGED",
                 "{\"jobId\":\"" + jobId + "\",\"to\":\"SUCCESS\"}"
         ));
+
+        jobMetrics.incSucceeded();
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -92,6 +95,8 @@ public class WorkerTx {
                 "STATUS_CHANGED",
                 "{\"jobId\":\"" + jobId + "\",\"to\":\"FAILED\",\"errorCode\":\"" + code + "\"}"
         ));
+
+        jobMetrics.incFailed();
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -136,6 +141,8 @@ public class WorkerTx {
                     "STATUS_CHANGED",
                     "{\"jobId\":\"" + jobId + "\",\"to\":\"RETRY_WAIT\",\"nextRunAt\":\"" + nextRunAt + "\",\"errorCode\":\"" + code + "\"}"
             ));
+
+            jobMetrics.incRetryScheduled();
         } else {
             finalizeFailed(jobId, attemptNo, code, message);
         }

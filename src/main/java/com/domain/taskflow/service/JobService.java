@@ -3,6 +3,7 @@ package com.domain.taskflow.service;
 import com.domain.taskflow.api.dto.JobCreateRequest;
 import com.domain.taskflow.domain.Job;
 import com.domain.taskflow.domain.JobEvent;
+import com.domain.taskflow.metrics.JobMetrics;
 import com.domain.taskflow.repo.JobEventRepository;
 import com.domain.taskflow.repo.JobRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -21,6 +22,7 @@ public class JobService {
 
     private final JobRepository jobRepository;
     private final JobEventRepository jobEventRepository;
+    private final JobMetrics jobMetrics;
 
     @Transactional
     public Job create(JobCreateRequest req) {
@@ -53,6 +55,8 @@ public class JobService {
                 "JOB_CREATED",
                 "{\"jobId\":\"" + jobId + "\",\"status\":\"PENDING\"}");
         jobEventRepository.save(ev);
+
+        jobMetrics.incCreated();
 
         return job;
     }

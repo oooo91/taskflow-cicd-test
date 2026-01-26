@@ -1,12 +1,8 @@
 package com.domain.taskflow.worker;
 
 import com.domain.taskflow.domain.Job;
-import com.domain.taskflow.domain.JobAttempt;
 import com.domain.taskflow.domain.JobStatus;
-import com.domain.taskflow.repo.JobAttemptRepository;
-import com.domain.taskflow.repo.JobEventRepository;
 import com.domain.taskflow.repo.JobRepository;
-import com.domain.taskflow.retry.RetryPolicy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +16,6 @@ public class WorkerRunner {
     private final WorkerTx workerTx;
     private final JobRepository jobRepository;
     private final Map<String, JobHandler> handlers;
-    private final RetryPolicy retryPolicy;
 
     private final WorkerProperties workerProperties;
 
@@ -64,7 +59,8 @@ public class WorkerRunner {
         return new ErrorInfo("EXEC_ERROR", e.getMessage() == null ? e.toString() : e.getMessage());
     }
 
-    private record ErrorInfo(String code, String message) {}
+    private record ErrorInfo(String code, String message) {
+    }
 
 
 }

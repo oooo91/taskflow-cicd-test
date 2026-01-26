@@ -1,5 +1,6 @@
 package com.domain.taskflow.worker;
 
+import com.domain.taskflow.metrics.JobMetrics;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -11,7 +12,7 @@ import java.util.UUID;
 public class JobExecutionCoordinator {
 
     private final RedisLockService lockService;
-    private final JobRunner jobRunner;
+    private final JobMetrics jobMetrics;
     private final WorkerRunner workerRunner;
 
     private final String workerId = "worker-1"; // 클라우드 올릴 떈 host/pod 로 변경
@@ -22,7 +23,8 @@ public class JobExecutionCoordinator {
         if (!locked) return;
 
         try {
-            workerRunner.runOne(jobId);
+            // Job을 실행하는 전체 시간 측정
+            jobMetrics.timer().record(() -> workerRunner.runOne(jobId));
         } finally {
             lockService.unlock(lockKey, workerId);
         }

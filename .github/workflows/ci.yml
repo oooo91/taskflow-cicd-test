@@ -22,6 +22,10 @@ jobs:
           java-version: "17"
           cache: gradle
 
+      # .gradlew 권한 추가
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
       # 테스트는 CI에서 수행 (Testcontainers 포함)
       - name: Test (unit + integration)
         run: ./gradlew test integrationTest --no-daemon

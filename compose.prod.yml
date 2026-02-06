@@ -1,6 +1,6 @@
 services:
   app:
-    image: ghcr.io/<YOUR_GITHUB_ID>/taskflow:latest
+    image: ghcr.io/oooo91/taskflow:latest
     container_name: taskflow-app
     depends_on:
       - postgres
